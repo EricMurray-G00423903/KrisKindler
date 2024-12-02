@@ -1,25 +1,14 @@
-import logo from './logo.svg';
-import './App.css';
-import Button from '@mui/material/Button'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import NavigationBar from './Components/NavigationBar';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-        <Button variant="contained">Hello world</Button>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <NavigationBar />
+      <Routes>
+        <Route path="/" element={<h1>Welcome to KrisKindler</h1>} />
+      </Routes>
+    </Router>
   );
 }
 
