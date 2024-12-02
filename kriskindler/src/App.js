@@ -1,14 +1,20 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import NavigationBar from './Components/NavigationBar';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";  // Import BrowserRouter, Routes, and Route from react-router-dom to route to different pages
+import NavigationBar from './Components/NavigationBar'; // Import the NavigationBar component
+import Home from './Pages/Home';  // Import the Home component
+import Create from './Pages/Create';  // Import the Create component
+import View from "./Pages/View";  // Import the View component
+import Wishlist from "./Pages/Wishlist";  // Import the Wishlist component
 
+// App component handles the routing for the application
 function App() {
   return (
     <Router>
       <NavigationBar />
       <Routes>
-        <Route path="/" element={<h1>Welcome to KrisKindler</h1>} />
-        <Route path="/about" element={<h1>About Us</h1>} />
-        <Route path="/contact" element={<h1>Contact Us</h1>} />
+        <Route path="/" element={<Home />} />
+        <Route path="/create" element={<Create />} />
+        <Route path="/view" element={<View />} />
+        <Route path="/wishlist" element={<Wishlist />} />
       </Routes>
     </Router>
   );
