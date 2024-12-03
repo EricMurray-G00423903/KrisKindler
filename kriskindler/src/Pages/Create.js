@@ -52,13 +52,18 @@ const Create = () => {
         if (validateForm()) {
             setIsSubmitting(true); // Disable the button
             try {
-                await axios.post('http://localhost:4000/api/groups', {
+                const response = await axios.post('http://localhost:4000/api/groups', {
                     name: groupName,
                     budget: parseFloat(budget),
                     members: members,
                 });
-                setOpenSnackbar(true); // Show success feedback
-                setTimeout(() => navigate('/view'), 2000); // Redirect after success
+    
+                // Extract the join link from the response
+                const { joinLink } = response.data;
+    
+                // Show success feedback and navigate to the Join Group page
+                setOpenSnackbar(true);
+                setTimeout(() => navigate(`/join-group?joinLink=${joinLink}`), 2000);
             } catch (error) {
                 console.error('Failed to create group:', error.response?.data || error.message);
                 setErrors({ form: 'Failed to create group. Please try again.' });
@@ -69,14 +74,14 @@ const Create = () => {
     
     
 
-     // Close Snackbar
+    // Close Snackbar
      const handleCloseSnackbar = () => {
         setOpenSnackbar(false);
     };
 
     return (
         <Box sx={{ maxWidth: 500, margin: '2rem auto', padding: '2rem', boxShadow: 3, borderRadius: 2 }}>
-            <Typography variant="h4" sx={{ marginBottom: '1rem', textAlign: 'center', color: '#2e7d32' }}>
+            <Typography variant="h4" sx={{ marginBottom: '1rem', textAlign: 'center', color: '#2e7d32', fontFamily: 'Roboto Slab' }}>
                 Create Group
             </Typography>
             <form onSubmit={handleSubmit}>
