@@ -38,29 +38,32 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     const { name, budget, members } = req.body;
 
-    // Basic validation
-    if (!name || !budget || !Array.isArray(members) || members.length < 2) {
-        return res.status(400).json({ error: 'All fields are required, and there must be at least 2 members.' });
+    // Validate request body
+    if (!name || !budget || !Array.isArray(members) || members.length < 3) {
+        return res.status(400).json({ error: 'All fields are required, and there must be at least 3 members.' });
     }
 
-    // Initialize members with wishlists
     const membersWithWishlists = members.map((memberName) => ({
         name: memberName,
         wishlist: [],
     }));
 
-    // Assign Secret Santa
-    const membersWithAssignments = assignSecretSanta(membersWithWishlists);
+    const membersWithAssignments = assignSecretSanta(membersWithWishlists); // Assign secret santas to members
 
+    // Create a new group
     try {
         const newGroup = new Group({
             name,
             budget,
-            members: membersWithAssignments, // Save members with Secret Santa assignments
+            members: membersWithAssignments,
         });
 
-        const savedGroup = await newGroup.save(); // Save to MongoDB
-        res.status(201).json(savedGroup);
+        const savedGroup = await newGroup.save();   // Save the group to MongoDB
+
+        // Create the join link
+        const joinLink = `http://localhost:3000/join/${savedGroup._id}`;
+
+        res.status(201).json({ group: savedGroup, joinLink });
     } catch (err) {
         res.status(500).json({ error: 'Failed to create group', details: err.message });
     }
@@ -98,5 +101,61 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to delete group', details: err.message });
     }
 });
+
+// POST: Join a group by ID
+router.post('/:groupId/join', async (req, res) => {
+    const { groupId } = req.params;
+    const { name } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ error: 'Name is required.' });
+    }
+
+    try {
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found.' });
+        }
+
+        // Find the member in the group
+        const member = group.members.find((member) => member.name === name);
+
+        if (!member) {
+            return res.status(400).json({ error: 'No such member in this group.' });
+        }
+
+        if (member.hasJoined) {
+            return res.status(400).json({ error: 'You have already joined this group.' });
+        }
+
+        // Update hasJoined to true
+        member.hasJoined = true;
+        await group.save();
+
+        // Respond with the assigned member and wishlist
+        const assignedTo = group.members.find((m) => m.name === member.assignedTo);
+        res.status(200).json({ message: 'Successfully joined the group.', assignedTo });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to join group', details: err.message });
+    }
+});
+    
+
+router.post('/filter', async (req, res) => {
+    const { groupIds } = req.body;
+
+    if (!Array.isArray(groupIds) || groupIds.length === 0) {
+        return res.status(400).json({ error: 'Invalid group IDs.' });
+    }
+
+    try {
+        const groups = await Group.find({ _id: { $in: groupIds } });
+        res.status(200).json(groups);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch groups', details: err.message });
+    }
+});
+
+
 
 module.exports = router;

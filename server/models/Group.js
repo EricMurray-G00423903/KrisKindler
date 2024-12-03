@@ -10,8 +10,16 @@ const memberSchema = new mongoose.Schema({
 const groupSchema = new mongoose.Schema({
     name: { type: String, required: true },
     budget: { type: Number, required: true },
-    members: [memberSchema], // Embedding members within the group
+    members: [
+        {
+            name: { type: String, required: true },
+            wishlist: { type: [String], default: [] },
+            assignedTo: { type: String, default: null }, // For Secret Santa
+            hasJoined: { type: Boolean, default: false }, // Tracks whether the member has joined
+        },
+    ],
 });
+
 
 const Group = mongoose.model('Group', groupSchema);
 
