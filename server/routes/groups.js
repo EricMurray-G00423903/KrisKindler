@@ -41,4 +41,36 @@ router.post('/', async (req, res) => {
     }
 });
 
+// PUT: Update a member's wishlist
+router.put('/:groupId/members/:memberId/wishlist', async (req, res) => {
+    const { groupId, memberId } = req.params;
+    const { wishlist } = req.body;
+
+    try {
+        const group = await Group.findById(groupId);
+        const member = group.members.id(memberId);
+        member.wishlist = wishlist;
+        await group.save();
+
+        res.status(200).json(group);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update wishlist' });
+    }
+});
+
+// DELETE: Delete a group by ID
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const deletedGroup = await Group.findByIdAndDelete(id); // Delete the group from MongoDB
+        if (!deletedGroup) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        res.status(200).json({ message: 'Group deleted successfully', deletedGroup });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete group', details: err.message });
+    }
+});
+
 module.exports = router;
