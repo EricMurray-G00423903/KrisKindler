@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, IconButton } from '@mui/material';
+import { Box, TextField, Button, Typography, IconButton, Snackbar, Alert } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate hook for navigation after group creation
+import axios from 'axios'; // Import axios for API calls
 
 const Create = () => {
     const [groupName, setGroupName] = useState(''); //useState hook to store the group name
     const [budget, setBudget] = useState('');   //useState hook to store the budget
     const [members, setMembers] = useState(['']); // Dynamic list of member names
+    const [openSnackbar, setOpenSnackbar] = useState(false); // Snackbar state
     const [errors, setErrors] = useState({}); // Validation errors
+    const [isSubmitting, setIsSubmitting] = useState(false); // Form submission state stop people spamming POST requests
+    const navigate = useNavigate(); // useNavigate hook for navigation after group creation
 
     // Handle adding a new member input field
     const handleAddMember = () => {
@@ -42,17 +47,31 @@ const Create = () => {
     };
 
 
-    // Handle form submission - replace with axios after
-    const handleSubmit = (event) => {
-        event.preventDefault();     // prevent default form submission
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         if (validateForm()) {
-            console.log({ groupName, budget, members });
-            alert('Group Created Successfully!');   //integrate a modal/toast for user feedback later
-            setGroupName('');
-            setBudget('');
-            setMembers(['']);
-            setErrors({});
+            setIsSubmitting(true); // Disable the button
+            try {
+                await axios.post('http://localhost:4000/api/groups', {
+                    name: groupName,
+                    budget: parseFloat(budget),
+                    members: members,
+                });
+                setOpenSnackbar(true); // Show success feedback
+                setTimeout(() => navigate('/view'), 2000); // Redirect after success
+            } catch (error) {
+                console.error('Failed to create group:', error.response?.data || error.message);
+                setErrors({ form: 'Failed to create group. Please try again.' });
+                setIsSubmitting(false); // Re-enable the button if the request fails
+            }
         }
+    };
+    
+    
+
+     // Close Snackbar
+     const handleCloseSnackbar = () => {
+        setOpenSnackbar(false);
     };
 
     return (
@@ -110,10 +129,21 @@ const Create = () => {
                 </Button>
 
                 {/* Submit Button */}
-                <Button variant="contained" color="success" type="submit" fullWidth>
-                    Create Group
+                <Button variant="contained" color="success" type="submit" fullWidth disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Create Group'}
                 </Button>
             </form>
+            {/* Snackbar for Success Feedback */}
+            <Snackbar
+                open={openSnackbar}
+                autoHideDuration={3000} // Closes automatically after 3 seconds
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+                    Group created successfully! Redirecting...
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };
