@@ -16,20 +16,20 @@ const Create = () => {
 
     // Handle adding a new member input field
     const handleAddMember = () => {
-        setMembers([...members, '']);
+        setMembers([...members, '']);   // Add a new empty member input field
     };
 
     // Handle removing a member input field
     const handleRemoveMember = (index) => {
-        const updatedMembers = members.filter((_, i) => i !== index);
-        setMembers(updatedMembers);
+        const updatedMembers = members.filter((_, i) => i !== index);   // This code removes the member at the specified index
+        setMembers(updatedMembers); // Update the members state
     };
 
     // Handle input changes for member names
     const handleMemberChange = (index, value) => {
-        const updatedMembers = [...members];
-        updatedMembers[index] = value;
-        setMembers(updatedMembers);
+        const updatedMembers = [...members];    // Copy the current members array
+        updatedMembers[index] = value;  // Update the member name at the specified index
+        setMembers(updatedMembers); // Update the members state
     };
 
     // Validate form
@@ -52,6 +52,7 @@ const Create = () => {
         if (validateForm()) {
             setIsSubmitting(true); // Disable the button
             try {
+                // Make a POST request to create a new group
                 const response = await axios.post('http://localhost:4000/api/groups', {
                     name: groupName,
                     budget: parseFloat(budget),
@@ -60,14 +61,15 @@ const Create = () => {
     
                 // Extract the join link from the response
                 const { joinLink } = response.data;
+                const groupId = joinLink.split('/').pop(); // Extract group ID from the join link
     
                 // Show success feedback and navigate to the Join Group page
                 setOpenSnackbar(true);
-                setTimeout(() => navigate(`/join-group?joinLink=${joinLink}`), 2000);
+                setTimeout(() => navigate(`/join/${groupId}`), 2000);   // Redirect to the join page after 2 seconds
             } catch (error) {
                 console.error('Failed to create group:', error.response?.data || error.message);
-                setErrors({ form: 'Failed to create group. Please try again.' });
-                setIsSubmitting(false); // Re-enable the button if the request fails
+                setErrors({ form: 'Failed to create group. Please try again.' });   // Show an error message
+                setIsSubmitting(false); // Re-enable the button if the request fails 
             }
         }
     };
@@ -79,6 +81,7 @@ const Create = () => {
         setOpenSnackbar(false);
     };
 
+    // Create the form using material-ui
     return (
         <Box sx={{ maxWidth: 500, margin: '2rem auto', padding: '2rem', boxShadow: 3, borderRadius: 2 }}>
             <Typography variant="h4" sx={{ marginBottom: '1rem', textAlign: 'center', color: '#2e7d32', fontFamily: 'Roboto Slab' }}>

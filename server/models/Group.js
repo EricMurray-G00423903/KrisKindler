@@ -14,12 +14,12 @@ const groupSchema = new mongoose.Schema({
         {
             name: { type: String, required: true },
             wishlist: { type: [String], default: [] },
-            assignedTo: { type: String, default: null }, // For Secret Santa
-            hasJoined: { type: Boolean, default: false }, // Tracks whether the member has joined
+            assignedTo: { type: String, default: null },
+            hasJoined: { type: Boolean, default: false },
         },
     ],
+    owner: { type: String, required: true }, // Store the group owner's name
 });
-
 
 const Group = mongoose.model('Group', groupSchema);
 

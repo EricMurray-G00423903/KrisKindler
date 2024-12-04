@@ -5,24 +5,23 @@ const Group = require('../models/Group'); // Import Group model
 // Secret Santa assignment logic
 const assignSecretSanta = (members) => {
     const names = members.map((member) => member.name); // Extract member names
-    const shuffled = [...names];    // Copy the names array
+    const shuffled = [...names]; // Copy the names array
 
     // Shuffle until no one is assigned to themselves
     let isValid = false;
     while (!isValid) {
         for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));  // Random index
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];    // Swap elements 
+            const j = Math.floor(Math.random() * (i + 1)); // Random index
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // Swap elements
         }
-        isValid = names.every((name, index) => name !== shuffled[index]);   // Check if no one is assigned to themselves
+        isValid = names.every((name, index) => name !== shuffled[index]); // Check if no one is assigned to themselves
     }
-    
+
     return members.map((member, index) => ({
         ...member,
         assignedTo: shuffled[index],
     }));
 };
-
 
 // GET: Retrieve all groups
 router.get('/', async (req, res) => {
@@ -34,7 +33,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-//Updated POST req to include/assign secret santa members
+// POST: Create a new group and assign Secret Santa
 router.post('/', async (req, res) => {
     const { name, budget, members } = req.body;
 
@@ -46,19 +45,20 @@ router.post('/', async (req, res) => {
     const membersWithWishlists = members.map((memberName) => ({
         name: memberName,
         wishlist: [],
+        hasJoined: false,
     }));
 
-    const membersWithAssignments = assignSecretSanta(membersWithWishlists); // Assign secret santas to members
+    const membersWithAssignments = assignSecretSanta(membersWithWishlists); // Assign Secret Santa
 
-    // Create a new group
     try {
         const newGroup = new Group({
             name,
             budget,
             members: membersWithAssignments,
+            owner: members[0], // Set the first member as the group owner
         });
 
-        const savedGroup = await newGroup.save();   // Save the group to MongoDB
+        const savedGroup = await newGroup.save(); // Save to MongoDB
 
         // Create the join link
         const joinLink = `http://localhost:3000/join/${savedGroup._id}`;
@@ -69,7 +69,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-
 // PUT: Update a member's wishlist
 router.put('/:groupId/members/:memberId/wishlist', async (req, res) => {
     const { groupId, memberId } = req.params;
@@ -77,13 +76,47 @@ router.put('/:groupId/members/:memberId/wishlist', async (req, res) => {
 
     try {
         const group = await Group.findById(groupId);
-        const member = group.members.id(memberId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        const member = group.members.find((m) => m.name === memberId);
+        if (!member) {
+            return res.status(404).json({ error: 'Member not found' });
+        }
+
         member.wishlist = wishlist;
         await group.save();
 
         res.status(200).json(group);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to update wishlist' });
+        res.status(500).json({ error: 'Failed to update wishlist', details: err.message });
+    }
+});
+
+// PUT: Update group name and budget
+router.put('/:groupId', async (req, res) => {
+    const { groupId } = req.params;
+    const { name, budget, owner } = req.body;
+
+    try {
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Check if the owner matches the stored owner name
+        if (group.owner !== owner) {
+            return res.status(403).json({ error: 'Only the owner can update the group' });
+        }
+
+        group.name = name;
+        group.budget = budget;
+        await group.save();
+
+        res.status(200).json({ message: 'Group updated successfully', group });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update group', details: err.message });
     }
 });
 
@@ -104,43 +137,54 @@ router.delete('/:id', async (req, res) => {
 
 // POST: Join a group by ID
 router.post('/:groupId/join', async (req, res) => {
-    const { groupId } = req.params;
-    const { name } = req.body;
+    const { groupId } = req.params; // Extract group ID from the request parameters
+    const { name } = req.body;     // Extract name from the request body
 
-    if (!name) {
+    if (!name || !name.trim()) {
         return res.status(400).json({ error: 'Name is required.' });
     }
 
     try {
+        // Find the group in the database
         const group = await Group.findById(groupId);
         if (!group) {
             return res.status(404).json({ error: 'Group not found.' });
         }
 
-        // Find the member in the group
-        const member = group.members.find((member) => member.name === name);
+        // Find the member in the group by name
+        const member = group.members.find((member) => member.name.toLowerCase() === name.toLowerCase());
 
         if (!member) {
-            return res.status(400).json({ error: 'No such member in this group.' });
+            return res.status(400).json({ error: `No member named "${name}" found in this group.` });
         }
 
+        // Check if the member has already joined the group
         if (member.hasJoined) {
-            return res.status(400).json({ error: 'You have already joined this group.' });
+            return res.status(400).json({ error: `The member "${name}" has already joined this group.` });
         }
 
-        // Update hasJoined to true
+        // Mark the member as having joined
         member.hasJoined = true;
+
+        // Save the updated group to the database
         await group.save();
 
-        // Respond with the assigned member and wishlist
+        // Retrieve the member they were assigned to (Secret Santa)
         const assignedTo = group.members.find((m) => m.name === member.assignedTo);
-        res.status(200).json({ message: 'Successfully joined the group.', assignedTo });
+
+        // Respond with success, including their assigned member's details
+        res.status(200).json({
+            message: `Successfully joined the group as "${name}".`,
+            assignedTo: assignedTo || { name: 'No assignment yet', wishlist: [] }
+        });
     } catch (err) {
+        // Handle any unexpected errors
         res.status(500).json({ error: 'Failed to join group', details: err.message });
     }
 });
-    
 
+
+// POST: Filter groups by IDs
 router.post('/filter', async (req, res) => {
     const { groupIds } = req.body;
 
@@ -155,7 +199,5 @@ router.post('/filter', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch groups', details: err.message });
     }
 });
-
-
 
 module.exports = router;

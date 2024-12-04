@@ -1,25 +1,27 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";  // Import BrowserRouter, Routes, and Route from react-router-dom to route to different pages
-import NavigationBar from './Components/NavigationBar'; // Import the NavigationBar component
-import Home from './Pages/Home';  // Import the Home component
-import Create from './Pages/Create';  // Import the Create component
-import View from "./Pages/View";  // Import the View component
-import Wishlist from "./Pages/Wishlist";  // Import the Wishlist component
-import JoinGroup from "./Pages/JoinGroup";  // Import the JoinGroup component
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import NavigationBar from './Components/NavigationBar'; // Include the NavigationBar UI component
+// Import the pages
+import Home from './Pages/Home';
+import Create from './Pages/Create';
+import JoinGroup from './Pages/JoinGroup';
+import View from './Pages/View';
+import Wishlist from './Pages/Wishlist';
 
-// App component handles the routing for the application
-function App() {
-  return (
-    <Router>
-      <NavigationBar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/create" element={<Create />} />
-        <Route path="/view" element={<View />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/join-group" element={<JoinGroup />} />
-      </Routes>
-    </Router>
-  );
-}
+// App component with routing, The NavigationBar is displayed on all pages
+const App = () => {
+    return (
+        <Router>
+            <NavigationBar />
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/create" element={<Create />} />
+                <Route path="/view" element={<View />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/join/:groupId" element={<JoinGroup />} />
+            </Routes>
+        </Router>
+    );
+};
 
 export default App;
