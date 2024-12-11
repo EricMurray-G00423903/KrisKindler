@@ -153,20 +153,48 @@ const Wishlist = () => {
                 groups.map((group) => (
                     <Card key={group._id} sx={{ marginBottom: '1rem', boxShadow: 3 }}>
                         <CardContent>
-                            <Typography variant="h6">{group.name}</Typography>
-                            <Typography variant="body2" sx={{ marginBottom: '1rem' }}>
+                            {/* Group Name */}
+                            <Typography
+                                variant="h5"
+                                sx={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#ed6c02' }}
+                            >
+                                {group.name}
+                            </Typography>
+
+                            {/* Budget */}
+                            <Typography variant="subtitle1" color="textSecondary" sx={{ marginBottom: '1rem' }}>
                                 Budget: €{group.budget}
                             </Typography>
+
+                            {/* Assigned To */}
                             {assignments[group._id] ? (
                                 <>
-                                    <Typography variant="body1">
-                                        Assigned to: {assignments[group._id].name}
+                                    <Typography
+                                        variant="h6"
+                                        sx={{ marginBottom: '0.5rem', fontStyle: 'italic' }}
+                                    >
+                                        Assigned to: <span style={{ fontWeight: 'bold' }}>{assignments[group._id].name}</span>
                                     </Typography>
-                                    <Typography variant="body2">
-                                        Wishlist: {assignments[group._id].wishlist.length > 0
-                                            ? assignments[group._id].wishlist.join(', ')
-                                            : 'No items yet.'}
-                                    </Typography>
+
+                                    {/* Wishlist */}
+                                    {assignments[group._id].wishlist.length > 0 ? (
+                                        <Box>
+                                            <Typography variant="subtitle1" sx={{ marginBottom: '0.5rem' }}>
+                                                Wishlist:
+                                            </Typography>
+                                            <ul style={{ paddingLeft: '20px', textAlign: 'left' }}>
+                                                {assignments[group._id].wishlist.map((item, idx) => (
+                                                    <li key={idx} style={{ marginBottom: '0.5rem' }}>
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </Box>
+                                    ) : (
+                                        <Typography variant="subtitle2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
+                                            Wishlist: No items yet.
+                                        </Typography>
+                                    )}
                                 </>
                             ) : (
                                 <Typography variant="body2" color="textSecondary">
@@ -175,9 +203,14 @@ const Wishlist = () => {
                             )}
 
                             {/* Wishlist Form */}
-                            <Typography variant="h6" sx={{ marginTop: '1rem' }}>Your Wishlist</Typography>
+                            <Typography variant="h6" sx={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
+                                Your Wishlist
+                            </Typography>
                             {(wishlists[group._id] || []).map((item, index) => (
-                                <Box key={index} sx={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                <Box
+                                    key={index}
+                                    sx={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}
+                                >
                                     <TextField
                                         fullWidth
                                         label={`Item ${index + 1}`}
@@ -185,15 +218,29 @@ const Wishlist = () => {
                                         onChange={(e) => handleWishlistChange(group._id, index, e.target.value)}
                                         sx={{ marginRight: '0.5rem' }}
                                     />
-                                    <IconButton color="error" onClick={() => handleRemoveWishlistItem(group._id, index)}>
+                                    <IconButton
+                                        color="error"
+                                        onClick={() => handleRemoveWishlistItem(group._id, index)}
+                                    >
                                         <RemoveIcon />
                                     </IconButton>
                                 </Box>
                             ))}
-                            <Button variant="outlined" color="success" onClick={() => handleAddWishlistItem(group._id)} startIcon={<AddIcon />} sx={{ marginBottom: '1rem' }}>
+                            <Button
+                                variant="outlined"
+                                color="success"
+                                onClick={() => handleAddWishlistItem(group._id)}
+                                startIcon={<AddIcon />}
+                                sx={{ marginBottom: '1rem' }}
+                            >
                                 Add Item
                             </Button>
-                            <Button variant="contained" color="success" onClick={() => handleUpdateWishlist(group._id)} fullWidth>
+                            <Button
+                                variant="contained"
+                                color="success"
+                                onClick={() => handleUpdateWishlist(group._id)}
+                                fullWidth
+                            >
                                 Update Wishlist
                             </Button>
                         </CardContent>
